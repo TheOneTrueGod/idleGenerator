@@ -1,9 +1,43 @@
+const DECAY = 0.001;
+
 class BoardCell {
     value: number;
     oldValue: number;
-    constructor(value: number) {
+    row: number;
+    col: number;
+    constructor(value: number, row: number, col: number) {
         this.value = value;
         this.oldValue = 0;
+        this.row = row;
+        this.col = col;
+    }
+
+    startTick(tick: number) {
+        this.oldValue = this.value;
+        this.value = 0;
+    }
+
+    doTick(tick: number, gameBoard: GameBoard) {
+        const connections = [[-1, 0], [1, 0], [0, 1], [0, -1]];
+        const validConnections = connections.map((offset) => {
+            return [this.row + offset[0], this.col + offset[1]];
+        }).filter((target) => {
+            return gameBoard.in_bounds(target[0], target[1])
+        });
+
+        // We are our own neighbour
+        const numNeighbours = validConnections.length + 1;
+        validConnections.forEach((target) => {
+            const targetCell = gameBoard.get_at(target[0], target[1]);
+            // @ts-ignore
+            targetCell.value += this.oldValue / numNeighbours;
+        });
+        this.value += this.oldValue / numNeighbours;
+    }
+
+    endTick(tick: number) {
+        this.oldValue = 0;
+        this.value = Math.max(this.value - DECAY, 0)
     }
 }
 
@@ -17,13 +51,33 @@ export class GameBoard {
         for (let row = 0; row < rows; row ++) {
             this.gameBoard.push([]);
             for (let col = 0; col < cols; col ++) {
-              this.gameBoard[row].push(new BoardCell(0));
+              this.gameBoard[row].push(new BoardCell(0, row, col));
             }
           }
     }
 
     startTick(tick: number) {
+        this.gameBoard.forEach((rowArr, row) => {
+            rowArr.forEach((cell, col) => {
+                cell.startTick(tick);
+            });
+        })
+    }
 
+    doTick(tick: number) {
+        this.gameBoard.forEach((rowArr, row) => {
+            rowArr.forEach((cell, col) => {
+                cell.startTick(tick);
+            });
+        })
+    }
+
+    endTick(tick: number) {
+        this.gameBoard.forEach((rowArr, row) => {
+            rowArr.forEach((cell, col) => {
+                cell.endTick(tick);
+            });
+        })
     }
 
     get_color(row: number, col: number) {
@@ -57,8 +111,8 @@ export class GameBoard {
   
     get_at(row: number, col: number) {
         if (this.in_bounds(row, col)) {
-            return this.gameBoard[row][col].value;
+            return this.gameBoard[row][col];
         }
-        return 0;
+        return undefined;
     };
 }
