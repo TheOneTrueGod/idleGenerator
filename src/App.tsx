@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 
 import styled from 'styled-components';
-import { GameBoard } from './GameBoard/GameBoard';
+import { GameBoard, TCellStructures } from './GameBoard/GameBoard';
 import { BoardCellComponent } from './GameBoard/BoardCellComponent';
+import { BuildingSelector } from './GameBoard/BuildingSelector';
 
 const BoardRow = styled.div`
   display: flex;
@@ -23,16 +24,22 @@ let gameBoard: GameBoard = new GameBoard(ROWS, COLS);;
 const gameTick = (tick: number) => {
   gameBoard.startTick(tick);
   gameBoard.doTick(tick);
+  gameBoard.harvestEnergy(tick, gameBoard);
   gameBoard.endTick(tick);
   if (tick % 5 === 1) {
-    let tRow = Math.floor(Math.random() * ROWS);
-    let tCol = Math.floor(Math.random() * COLS);
-    gameBoard.gameBoard[tRow][tCol].value = 100;
+    gameBoard.generateRandomImpact(100);
+  }
+  if (tick % 10 === 1 && Math.random() > 0.5) {
+    gameBoard.generateRandomImpact(200);
+  }
+  if (tick % 40 === 1 && Math.random() > 0.9) {
+    gameBoard.generateRandomImpact(1000);
   }
 }
 
 function App() {
   const [tick, setTick] = useState(0);
+  const [selectedBuilding, setSelectedBuilding] = useState<TCellStructures>('well');
 
   useEffect(() => {
     const gameInterval = setInterval(() => {
@@ -62,6 +69,9 @@ function App() {
           Total Energy: { Math.floor(totalEnergy) }
         </div>
         <div>
+          Harvested: { Math.floor(gameBoard.energyHarvested) }
+        </div>
+        <div>
           { gameBoard.gameBoard.map((rowArr, row) => 
             <BoardRow key={row}>
               {
@@ -70,6 +80,7 @@ function App() {
                     <BoardCellComponent
                       key={col}
                       boardCell={cell}
+                      selectedBuilding={selectedBuilding}
                       gameBoard={gameBoard} />
                   );
                 })
@@ -77,6 +88,7 @@ function App() {
             </BoardRow>
           )}
         </div>
+        <BuildingSelector selectedBuilding={selectedBuilding} setSelectedBuilding={setSelectedBuilding} />
       </header>
     </div>
   );
