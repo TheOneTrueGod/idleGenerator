@@ -1,6 +1,6 @@
-const DECAY = 0.001;
+const DECAY = 0.01;
 
-class BoardCell {
+export class BoardCell {
     value: number;
     oldValue: number;
     row: number;
@@ -67,7 +67,7 @@ export class GameBoard {
     doTick(tick: number) {
         this.gameBoard.forEach((rowArr, row) => {
             rowArr.forEach((cell, col) => {
-                cell.startTick(tick);
+                cell.doTick(tick, this);
             });
         })
     }
