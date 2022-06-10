@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { BoardCell, GameBoard, TCellStructures } from './GameBoard';
+import React from 'react';
+import { BoardCell, GameBoard } from './GameBoard';
 
 import styled from 'styled-components';
+import { STRUCTURE_TYPE_TO_STRUCTURE, TCellStructures } from './Structures/Structure';
 
 const Container = styled.div`
   width: 1em;
@@ -33,10 +34,13 @@ export const BoardCellComponent: React.FC<{ boardCell: BoardCell, gameBoard: Gam
     ({ boardCell, gameBoard, selectedBuilding }) => {
 
         function handleClick() {
-            if (boardCell.structure === selectedBuilding) {
-                boardCell.buildStructure('none');
-            } else {
-                boardCell.buildStructure(selectedBuilding);
+            if (boardCell.canBeBuiltOn()) {
+                if (boardCell.structure?.getType() === selectedBuilding) {
+                    boardCell.destroyStructure();
+                } else {
+                    const selectedBuildingClass = STRUCTURE_TYPE_TO_STRUCTURE[selectedBuilding];
+                    boardCell.buildStructure(new selectedBuildingClass());
+                }
             }
         }
 
@@ -52,10 +56,10 @@ export const BoardCellComponent: React.FC<{ boardCell: BoardCell, gameBoard: Gam
                 }}
                 onClick={() => handleClick()}
             >
-                { boardCell.structure === 'well' && <WellContainer style={{
+                { boardCell.structure?.getType() === 'well' && <WellContainer style={{
                     background: `hsla(360, 100%, ${ integ * 50 + 50}%, 1)`
                 }} /> }
-                { boardCell.structure === 'absorber' && <AbsorberContainer /> }
+                { boardCell.structure?.getType() === 'absorber' && <AbsorberContainer /> }
                 <DisplayContainer>{ gameBoard.get_display(boardCell.row, boardCell.col) }</DisplayContainer>
             </Container>
         );

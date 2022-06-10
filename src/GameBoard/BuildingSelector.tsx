@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import { TCellStructures } from './GameBoard';
+import { TCellStructures } from './Structures/Structure';
 
 const Container = styled.div`
     width: 100%;
@@ -16,6 +16,7 @@ const Building = styled.div`
     padding: 20px;
     height: 100%;
     cursor: pointer;
+    box-sizing: border-box;
 `;
 
 export const BuildingSelector: React.FC<{ 
@@ -31,7 +32,7 @@ export const BuildingSelector: React.FC<{
                     <Building
                         key={buildingName} 
                         style={{
-                            border: selectedBuilding === buildingName ? '1px solid white' : 'none'
+                            border: selectedBuilding === buildingName ? '1px solid white' : '1px solid rgba(0, 0, 0, 0)'
                         }}
                         onClick={() => { setSelectedBuilding(buildingName); }}
                     >

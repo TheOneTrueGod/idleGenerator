@@ -2,40 +2,19 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 
 import styled from 'styled-components';
-import { GameBoard, TCellStructures } from './GameBoard/GameBoard';
+import { GameBoard } from './GameBoard/GameBoard';
 import { BoardCellComponent } from './GameBoard/BoardCellComponent';
 import { BuildingSelector } from './GameBoard/BuildingSelector';
+import { TCellStructures } from './GameBoard/Structures/Structure';
 
 const BoardRow = styled.div`
   display: flex;
 `;
 
-const BoardCell = styled.div`
-  width: 1em;
-  height: 1em;
-  font-size: 12px;
-`;
-
 const ROWS = 40;
 const COLS = 50;
 
-let gameBoard: GameBoard = new GameBoard(ROWS, COLS);;
-
-const gameTick = (tick: number) => {
-  gameBoard.startTick(tick);
-  gameBoard.doTick(tick);
-  gameBoard.harvestEnergy(tick, gameBoard);
-  gameBoard.endTick(tick);
-  if (tick % 5 === 1) {
-    gameBoard.generateRandomImpact(100);
-  }
-  if (tick % 10 === 1 && Math.random() > 0.5) {
-    gameBoard.generateRandomImpact(200);
-  }
-  if (tick % 40 === 1 && Math.random() > 0.9) {
-    gameBoard.generateRandomImpact(1000);
-  }
-}
+let gameBoard: GameBoard = new GameBoard(ROWS, COLS);
 
 function App() {
   const [tick, setTick] = useState(0);
@@ -52,13 +31,13 @@ function App() {
   }, []);
 
   useEffect(() => {
-    gameTick(tick);
+    gameBoard.playTick(tick);
   }, [tick]);
 
   let totalEnergy = 0;
   gameBoard.gameBoard.forEach((row) => {
     row.forEach((cell) => {
-      totalEnergy += cell.value;
+      totalEnergy += cell.fluxAmount;
     })
   })
   
