@@ -76,9 +76,6 @@ export class StructureFluxProducer extends Structure {
         if (tick % 10 === 1 && Math.random() > 0.5) {
             gameBoard.generateRandomImpact(200, range);
         }
-        if (tick % 40 === 1 && Math.random() > 0.9) {
-            gameBoard.generateRandomImpact(1000, range);
-        }
     }
     canBeBuiltOver() { return false; }
 }

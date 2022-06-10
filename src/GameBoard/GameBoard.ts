@@ -18,7 +18,7 @@ export class BoardCell {
     }
 
     canBeBuiltOn() {
-        return this.structure?.canBeBuiltOver();
+        return !this.structure || this.structure?.canBeBuiltOver();
     }
 
     buildStructure(struct: Structure) {
