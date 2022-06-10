@@ -7,7 +7,7 @@ import { BoardCellComponent } from './Components/BoardCellComponent';
 import { BuildingSelector } from './Components/BuildingSelector';
 import { TCellStructures } from './GameBoard/Structures/Structure';
 import { HoverInfo } from './Components/HoverInfo';
-import { GameData } from './GameBoard/GameData';
+import { GameData, Upgradeable, UpgradeNames } from './GameBoard/GameData';
 
 const BoardRow = styled.div`
   display: flex;
@@ -48,6 +48,10 @@ function App() {
       totalEnergy += cell.fluxAmount;
     })
   })
+
+  const onUpgradeClick = (buildingType: Upgradeable, upgradeName: UpgradeNames) => {
+    gameData.buyUpgrade(buildingType, upgradeName);
+  }
   
   return (
     <div className="App">
@@ -81,7 +85,12 @@ function App() {
             )}
           </div>
         </GameBody>
-        <BuildingSelector selectedBuilding={selectedBuilding} setSelectedBuilding={setSelectedBuilding} />
+        <BuildingSelector 
+          gameData={gameData}
+          selectedBuilding={selectedBuilding}
+          setSelectedBuilding={setSelectedBuilding}
+          onUpgradeClick={onUpgradeClick}
+          />
       </header>
     </div>
   );

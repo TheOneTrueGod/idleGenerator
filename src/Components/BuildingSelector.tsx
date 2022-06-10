@@ -1,7 +1,10 @@
 import React from 'react';
 
 import styled from 'styled-components';
+import { GameData, Upgradeable, UpgradeNames } from '../GameBoard/GameData';
 import { TCellStructures } from '../GameBoard/Structures/Structure';
+
+type OnUpgradeClick = (buildingType: Upgradeable, upgradeName: UpgradeNames) => void;
 
 const Container = styled.div`
     width: 100%;
@@ -22,20 +25,26 @@ const BuildingContainer = styled.div`
 export const BuildingSelector: React.FC<{ 
     selectedBuilding: TCellStructures,
     setSelectedBuilding: Function,
-}> = ({ selectedBuilding, setSelectedBuilding }) => {
-    const buildings: Array<TCellStructures> = ['well', 'absorber'];
+    gameData: GameData,
+    onUpgradeClick: OnUpgradeClick,
+}> = ({ selectedBuilding, setSelectedBuilding, gameData, onUpgradeClick }) => {
+    const buildings: Array<Upgradeable> = ['well', 'absorber'];
 
     return (
         <Container>
             <Building
-                key={"Board"}
-                buildingType={"Board"}
+                key={"board"}
+                buildingType={"board"}
+                gameData={gameData}
+                onUpgradeClick={onUpgradeClick}
             />
             { buildings.map((buildingName) => {
                 return (
                     <Building
                         key={buildingName}
                         buildingType={buildingName}
+                        onUpgradeClick={onUpgradeClick}
+                        gameData={gameData}
                         selected={selectedBuilding === buildingName}
                         onClick={() => { setSelectedBuilding(buildingName) }}
                     />
@@ -46,10 +55,13 @@ export const BuildingSelector: React.FC<{
 }
 
 const Building: React.FC<{
-    buildingType: TCellStructures | "Board",
+    buildingType: Upgradeable,
     selected?: Boolean,
     onClick?: Function,
-}> = ({ buildingType, selected, onClick }) => {
+    gameData: GameData,
+    onUpgradeClick: OnUpgradeClick,
+}> = ({ onUpgradeClick, buildingType, selected, onClick, gameData }) => {
+    const upgradeNames = gameData.getUpgradeNamesForBuilding(buildingType);
     return (
         <BuildingContainer
             style={{
@@ -58,8 +70,15 @@ const Building: React.FC<{
             onClick={() => onClick && onClick()}
         >
             {buildingType}
-            <BuildingUpgrade upgradeName="Rate" />
-            <BuildingUpgrade upgradeName="Efficiency" />
+            {upgradeNames.map((upgradeName) => 
+                <BuildingUpgrade
+                    key={upgradeName}
+                    gameData={gameData}
+                    buildingName={buildingType}
+                    upgradeName={upgradeName}
+                    onClick={ () => onUpgradeClick(buildingType, upgradeName)}
+                />
+            )}
         </BuildingContainer>
     );
 }
@@ -71,6 +90,7 @@ const UpgradeContainer = styled.div`
     flex-direction: row;
     align-items: center;
     margin: 4px 0px;
+    height: 1.5em;
 `;
 
 const UpgradeButton = styled.div`
@@ -88,14 +108,25 @@ const UpgradeValueButton = styled.div`
 `;
 
 const BuildingUpgrade: React.FC<{
-    upgradeName: string,
+    buildingName: Upgradeable,
+    upgradeName: UpgradeNames,
     onClick?: Function,
-}> = ({ upgradeName, onClick }) => {
+    gameData: GameData,
+}> = ({ buildingName, upgradeName, onClick, gameData }) => {
+    const statValue = gameData.getBuildingStat(buildingName, upgradeName);
+
+    const displayNames = {
+        'harvestRate': 'Absorb',
+        'efficiency': 'Efficiency',
+    }
+
+    const showUpgradeButton = !gameData.isAtMaxUpgradeLevel(buildingName, upgradeName);
+
     return (
-        <UpgradeContainer onClick={() => onClick && onClick()}>
-            <div>{upgradeName}</div>
-            <UpgradeValueButton>0.1</UpgradeValueButton>
-            <UpgradeButton>+</UpgradeButton>
+        <UpgradeContainer>
+            <div>{displayNames[upgradeName]}</div>
+            <UpgradeValueButton>{statValue}</UpgradeValueButton>
+            {showUpgradeButton && <UpgradeButton onClick={() => onClick && onClick()}>+</UpgradeButton>}
         </UpgradeContainer>
     );
 }

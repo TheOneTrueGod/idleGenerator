@@ -1,4 +1,5 @@
 import { BoardCell, GameBoard } from "../GameBoard";
+import { GameData } from "../GameData";
 
 export type TCellStructures =  'error' | 'well' | 'wall' | 'absorber' | 'fluxProducer';
 
@@ -17,14 +18,16 @@ export class Structure {
     generateFlux(tick: number, gameBoard: GameBoard, cell: BoardCell) {}
     getIntegrity(cell: BoardCell): number { return 1; }
     canBeBuiltOver() { return true; }
-    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard): number { return 0; }
+    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData): number { return 0; }
+}
+
+export class StructureError extends Structure {
+    constructor() { throw new Error('THIS SHOULD NEVER BE INITIALIZED'); super(); }
 }
 
 export class StructureWell extends Structure {
     type: TCellStructures = 'well';
     WELL_CAPACITY = 100;
-    WELL_ABSORB = 0.1;
-    WELL_EFFICIENCY = 0.1;
 
     readyToDestroy(cell: BoardCell): boolean {
         return cell.fluxAmount > this.WELL_CAPACITY;
@@ -34,25 +37,28 @@ export class StructureWell extends Structure {
         return 1 - (cell.fluxAmount / this.WELL_CAPACITY);
     }
 
-    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard) {
-        return cell.absorbEnergy(this.WELL_ABSORB) * this.WELL_EFFICIENCY;
+    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData) {
+        const wellAbsorb = gameData.getBuildingStat('well', 'harvestRate');
+        const wellEfficiency = gameData.getBuildingStat('well', 'efficiency');
+        return cell.absorbEnergy(wellAbsorb) * wellEfficiency;
     }
 }
 
 export class StructureAbsorber extends Structure {
     type: TCellStructures = 'absorber';
 
-    ABSORBER_ABSORB = 0.1;
-    ABSORBER_EFFICIENCY = 0.1;
-    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard) {
+    harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData) {
+        const absorbAmount = gameData.getBuildingStat('absorber', 'harvestRate');
+        const absorbEfficiency = gameData.getBuildingStat('absorber', 'efficiency');
+
         let amountAbsorbed = 0;
         const neighbours = cell.getValidConnections([[-1, 0], [1, 0], [0, -1], [0, 1]], gameBoard);
             
-        amountAbsorbed += cell.absorbEnergy(this.ABSORBER_ABSORB) * this.ABSORBER_EFFICIENCY;
+        amountAbsorbed += cell.absorbEnergy(absorbAmount) * absorbEfficiency;
 
         neighbours.forEach((targetCell) => {
             if (targetCell?.structure?.getType() === 'well') {
-                amountAbsorbed += targetCell.absorbEnergy(this.ABSORBER_ABSORB) * this.ABSORBER_EFFICIENCY;
+                amountAbsorbed += targetCell.absorbEnergy(absorbAmount) * absorbEfficiency;
             }
         }) 
         return amountAbsorbed;
@@ -81,7 +87,7 @@ export class StructureFluxProducer extends Structure {
 }
 
 export const STRUCTURE_TYPE_TO_STRUCTURE: Record<TCellStructures, typeof Structure> = {
-    'error': StructureWell,
+    'error': StructureError,
     'well': StructureWell,
     'wall': StructureWall,
     'absorber': StructureAbsorber,

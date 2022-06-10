@@ -89,9 +89,9 @@ export class BoardCell {
         return amountAbsorbed;
     }
 
-    harvestEnergy(tick: number, gameBoard: GameBoard) {
+    harvestEnergy(tick: number, gameBoard: GameBoard, gameData: GameData) {
         if (!this.structure) { return 0; }
-        return this.structure.harvestEnergy(tick, this, gameBoard);
+        return this.structure.harvestEnergy(tick, this, gameBoard, gameData);
     }
 
     getBuildingIntegrity() {
@@ -142,7 +142,7 @@ export class GameBoard {
         this.generateFlux(tick);
         this.startTick(tick);
         this.doTick(tick);
-        const energyHarvested = this.harvestEnergy(tick);
+        const energyHarvested = this.harvestEnergy(tick, gameData);
         this.endTick(tick);
 
         gameData.addEnergy(tick, energyHarvested);
@@ -180,11 +180,11 @@ export class GameBoard {
         })
     }
 
-    harvestEnergy(tick: number) {
+    harvestEnergy(tick: number, gameData: GameData) {
         let energyHarvested = 0;
         this.gameBoard.forEach((rowArr, row) => {
             rowArr.forEach((cell, col) => {
-                energyHarvested += cell.harvestEnergy(tick, this);
+                energyHarvested += cell.harvestEnergy(tick, this, gameData);
             });
         });
         return energyHarvested;
