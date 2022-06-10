@@ -1,8 +1,8 @@
 import React from 'react';
-import { BoardCell, GameBoard } from './GameBoard';
+import { BoardCell, GameBoard } from '../GameBoard/GameBoard';
 
 import styled from 'styled-components';
-import { STRUCTURE_TYPE_TO_STRUCTURE, TCellStructures } from './Structures/Structure';
+import { STRUCTURE_TYPE_TO_STRUCTURE, TCellStructures } from '../GameBoard/Structures/Structure';
 
 const Container = styled.div`
   width: 1em;

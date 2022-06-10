@@ -71,10 +71,10 @@ export class StructureFluxProducer extends Structure {
     generateFlux(tick: number, gameBoard: GameBoard, cell: BoardCell) {
         let range = { x1: cell.col - 2, x2: cell.col + 2, y1: cell.row - 2, y2: cell.row + 2 }
         if (tick % 5 === 1) {
-            gameBoard.generateRandomImpact(100, range);
+            gameBoard.generateRandomImpact(100);
         }
         if (tick % 10 === 1 && Math.random() > 0.5) {
-            gameBoard.generateRandomImpact(200, range);
+            gameBoard.generateRandomImpact(200);
         }
     }
     canBeBuiltOver() { return false; }

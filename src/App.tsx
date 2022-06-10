@@ -3,10 +3,11 @@ import './App.css';
 
 import styled from 'styled-components';
 import { BoardCell, GameBoard } from './GameBoard/GameBoard';
-import { BoardCellComponent } from './GameBoard/BoardCellComponent';
-import { BuildingSelector } from './GameBoard/BuildingSelector';
+import { BoardCellComponent } from './Components/BoardCellComponent';
+import { BuildingSelector } from './Components/BuildingSelector';
 import { TCellStructures } from './GameBoard/Structures/Structure';
 import { HoverInfo } from './Components/HoverInfo';
+import { GameData } from './GameBoard/GameData';
 
 const BoardRow = styled.div`
   display: flex;
@@ -20,12 +21,12 @@ const GameBody = styled.div`
 const ROWS = 40;
 const COLS = 50;
 
-let gameBoard: GameBoard = new GameBoard(ROWS, COLS);
-
 function App() {
   const [tick, setTick] = useState(0);
   const [selectedBuilding, setSelectedBuilding] = useState<TCellStructures>('well');
   const [hoveredCell, setHoveredCell] = useState<BoardCell | undefined>(undefined);
+  const [gameBoard] = useState<GameBoard>(new GameBoard(ROWS, COLS));
+  const [gameData] = useState<GameData>(new GameData())
 
   useEffect(() => {
     const gameInterval = setInterval(() => {
@@ -38,7 +39,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    gameBoard.playTick(tick);
+    gameBoard.playTick(tick, gameData);
   }, [tick]);
 
   let totalEnergy = 0;
@@ -55,7 +56,7 @@ function App() {
           Total Energy: { Math.floor(totalEnergy) }
         </div>
         <div>
-          Harvested: { Math.floor(gameBoard.energyHarvested) }
+          Harvested: { Math.floor(gameData.playerEnergy) }
         </div>
         <GameBody>
           <HoverInfo cell={hoveredCell} />

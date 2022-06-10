@@ -1,3 +1,4 @@
+import { GameData } from "./GameData";
 import { Structure, StructureFluxProducer, StructureWall, TCellStructures } from "./Structures/Structure";
 
 const DECAY = 0.01;
@@ -137,12 +138,14 @@ export class GameBoard {
         }
     }
 
-    playTick(tick: number) {
+    playTick(tick: number, gameData: GameData) {
         this.generateFlux(tick);
         this.startTick(tick);
         this.doTick(tick);
-        this.harvestEnergy(tick);
+        const energyHarvested = this.harvestEnergy(tick);
         this.endTick(tick);
+
+        gameData.addEnergy(tick, energyHarvested);
     }
 
     startTick(tick: number) {
@@ -178,11 +181,13 @@ export class GameBoard {
     }
 
     harvestEnergy(tick: number) {
+        let energyHarvested = 0;
         this.gameBoard.forEach((rowArr, row) => {
             rowArr.forEach((cell, col) => {
-                this.energyHarvested += cell.harvestEnergy(tick, this);
+                energyHarvested += cell.harvestEnergy(tick, this);
             });
-        })
+        });
+        return energyHarvested;
     }
 
     get_color(row: number, col: number) {
@@ -210,7 +215,7 @@ export class GameBoard {
   
     get_display(row: number, col: number) {
         if (this.gameBoard[row][col].structure?.getType() === 'wall') {
-            return '-';
+            return ' ';
         }
         return Math.min(Math.floor(this.gameBoard[row][col].fluxAmount), 9);
     }

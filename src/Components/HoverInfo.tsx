@@ -4,13 +4,13 @@ import styled from 'styled-components';
 import { BoardCell } from '../GameBoard/GameBoard';
 
 const Container = styled.div`
-    width: 200px;
+    width: 170px;
     border-right: 1px solid black;
     margin-right: 20px;
     padding-right: 20px;
     display: flex;
     flex-direction: column;
-    font-size: 12px;
+    font-size: 16px;
     text-align: left;
 `;
 
