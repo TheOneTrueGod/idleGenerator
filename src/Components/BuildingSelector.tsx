@@ -28,7 +28,7 @@ export const BuildingSelector: React.FC<{
     gameData: GameData,
     onUpgradeClick: OnUpgradeClick,
 }> = ({ selectedBuilding, setSelectedBuilding, gameData, onUpgradeClick }) => {
-    const buildings: Array<Upgradeable> = ['well', 'absorber'];
+    const buildings: Array<Upgradeable> = ['collector', 'absorber'];
 
     return (
         <Container>
@@ -118,6 +118,7 @@ const BuildingUpgrade: React.FC<{
     const displayNames = {
         'harvestRate': 'Absorb',
         'efficiency': 'Efficiency',
+        'capacity': 'Capacity'
     }
 
     const showUpgradeButton = !gameData.isAtMaxUpgradeLevel(buildingName, upgradeName);

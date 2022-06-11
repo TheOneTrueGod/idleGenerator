@@ -1,7 +1,7 @@
 import { BoardCell, GameBoard } from "../GameBoard";
 import { GameData } from "../GameData";
 
-export type TCellStructures =  'error' | 'well' | 'wall' | 'absorber' | 'fluxProducer';
+export type TCellStructures =  'error' | 'collector' | 'wall' | 'absorber' | 'fluxProducer';
 
 export class Structure {
     type: TCellStructures = 'error';
@@ -26,20 +26,22 @@ export class StructureError extends Structure {
 }
 
 export class StructureWell extends Structure {
-    type: TCellStructures = 'well';
-    WELL_CAPACITY = 100;
+    type: TCellStructures = 'collector';
+    static WELL_CAPACITY = 100;
 
     readyToDestroy(cell: BoardCell): boolean {
-        return cell.fluxAmount > this.WELL_CAPACITY;
+        return false;
+        return cell.fluxAmount > StructureWell.WELL_CAPACITY;
     }
 
     getIntegrity(cell: BoardCell): number {
-        return 1 - (cell.fluxAmount / this.WELL_CAPACITY);
+        return 1;
+        return 1 - (cell.fluxAmount / StructureWell.WELL_CAPACITY);
     }
 
     harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData) {
-        const wellAbsorb = gameData.getBuildingStat('well', 'harvestRate');
-        const wellEfficiency = gameData.getBuildingStat('well', 'efficiency');
+        const wellAbsorb = gameData.getBuildingStat('collector', 'harvestRate');
+        const wellEfficiency = gameData.getBuildingStat('collector', 'efficiency');
         return cell.absorbEnergy(wellAbsorb) * wellEfficiency;
     }
 }
@@ -57,7 +59,7 @@ export class StructureAbsorber extends Structure {
         amountAbsorbed += cell.absorbEnergy(absorbAmount) * absorbEfficiency;
 
         neighbours.forEach((targetCell) => {
-            if (targetCell?.structure?.getType() === 'well') {
+            if (targetCell?.structure?.getType() === 'collector') {
                 amountAbsorbed += targetCell.absorbEnergy(absorbAmount) * absorbEfficiency;
             }
         }) 
@@ -79,16 +81,16 @@ export class StructureFluxProducer extends Structure {
         if (tick % 5 === 1) {
             gameBoard.generateRandomImpact(100);
         }
-        if (tick % 10 === 1 && Math.random() > 0.5) {
+        /*if (tick % 10 === 1 && Math.random() > 0.5) {
             gameBoard.generateRandomImpact(200);
-        }
+        }*/
     }
     canBeBuiltOver() { return false; }
 }
 
 export const STRUCTURE_TYPE_TO_STRUCTURE: Record<TCellStructures, typeof Structure> = {
     'error': StructureError,
-    'well': StructureWell,
+    'collector': StructureWell,
     'wall': StructureWall,
     'absorber': StructureAbsorber,
     'fluxProducer': StructureFluxProducer,

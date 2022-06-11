@@ -1,18 +1,16 @@
 import { GameData } from "./GameData";
-import { Structure, StructureFluxProducer, StructureWall, TCellStructures } from "./Structures/Structure";
-
-const DECAY = 0.01;
+import { Structure, StructureFluxProducer, StructureWall, StructureWell, TCellStructures } from "./Structures/Structure";
 
 export class BoardCell {
     fluxAmount: number;
-    oldValue: number;
+    oldFlux: number;
     row: number;
     col: number;
 
     structure?: Structure;
     constructor(fluxAmount: number, row: number, col: number) {
         this.fluxAmount = fluxAmount;
-        this.oldValue = 0;
+        this.oldFlux = 0;
         this.row = row;
         this.col = col;
         this.structure = undefined;
@@ -31,33 +29,47 @@ export class BoardCell {
     }
 
     startTick(tick: number) {
-        this.oldValue = this.fluxAmount;
+        this.oldFlux = this.fluxAmount;
         this.fluxAmount = 0;
     }
 
     // When given a source Cell, determines how much of an energy share to take from it.
-    getPullAmount(sourceCell: BoardCell) {
+    getPullAmount(sourceCell: BoardCell, gameData: GameData) {
+        const DEFAULT_PULL = 10;
+        if (sourceCell === this) {
+            return DEFAULT_PULL;
+        }
         if (sourceCell.structure?.getType() === 'wall' || this.structure?.getType() === 'wall') {
             return 0;
         }
-        
-        if (sourceCell.structure?.getType() === 'well') {
-            if (this.structure?.getType() === 'well') {
-                return 100;
+
+        // If we're a collector, we want to pull (unless we're past our capacity)
+        if (this.structure?.getType() === 'collector') {
+            if (this.oldFlux < gameData.getBuildingStat('collector', 'capacity')) {
+                return DEFAULT_PULL;
             }
             return 0;
         }
+        
+        // If they're a collector, we only want to pull if we're a collector, or if they're past their capacity
+        if (sourceCell.structure?.getType() === 'collector') {
+            if (this.structure?.getType() === 'collector') {
+                return DEFAULT_PULL;
+            }
+            return 0;
+        }
+        
         return 10;
     }
 
-    doTick(tick: number, gameBoard: GameBoard) {
+    doTick(tick: number, gameBoard: GameBoard, gameData: GameData) {
         const connections = [[-1, 0], [1, 0], [0, 1], [0, -1], [-1, -1], [1, 1], [-1, 1], [1, -1], [0, 0]];
         const validConnections = this.getValidConnections(connections, gameBoard);
 
         // We are our own neighbour
         const totalPull = validConnections.reduce((prevAmount, targetCell) => {
             if (!targetCell) { return prevAmount }
-            return prevAmount + targetCell?.getPullAmount(this)
+            return prevAmount + targetCell?.getPullAmount(this, gameData)
         }, 0);
         if (totalPull === 0) {
             return;
@@ -66,10 +78,10 @@ export class BoardCell {
         let amountGivenAway = 0;
         validConnections.forEach((targetCell) => {
             if (!targetCell) { return; }
-            const pullAmount = targetCell.getPullAmount(this);
+            const pullAmount = targetCell.getPullAmount(this, gameData);
             let pctTransfer = pullAmount / totalPull
-            targetCell.fluxAmount += this.oldValue * pctTransfer;
-            amountGivenAway += this.oldValue * pctTransfer;
+            targetCell.fluxAmount += this.oldFlux * pctTransfer;
+            amountGivenAway += this.oldFlux * pctTransfer;
         })
     }
 
@@ -90,7 +102,9 @@ export class BoardCell {
     }
 
     harvestEnergy(tick: number, gameBoard: GameBoard, gameData: GameData) {
-        if (!this.structure) { return 0; }
+        if (!this.structure) { 
+            return this.absorbEnergy(gameData.getBuildingStat('board', 'harvestRate')) * gameData.getBuildingStat('board', 'efficiency');
+        }
         return this.structure.harvestEnergy(tick, this, gameBoard, gameData);
     }
 
@@ -99,13 +113,9 @@ export class BoardCell {
     }
 
     endTick(tick: number) {
-        
-        const ABSORBER_CAPACITY = 1;
-        this.oldValue = 0;
+        this.oldFlux = 0;
         if (this.structure?.readyToDestroy(this)) {
             this.destroyStructure();
-        } else {
-            this.fluxAmount = Math.max(this.fluxAmount - DECAY, 0)
         }
     }
 
@@ -131,17 +141,17 @@ export class GameBoard {
 
         // Initial Build
         this.gameBoard[2][2].buildStructure(new StructureFluxProducer());
-        this.gameBoard[this.rows - 3][2].buildStructure(new StructureFluxProducer());
-        for (let col = 0; col < this.cols - 5; col ++) {
-            this.gameBoard[5][col].buildStructure(new StructureWall());
-            this.gameBoard[34][col].buildStructure(new StructureWall());
-        }
+        //this.gameBoard[this.rows - 3][2].buildStructure(new StructureFluxProducer());
+        //for (let col = 0; col < this.cols - 5; col ++) {
+        //    this.gameBoard[5][col].buildStructure(new StructureWall());
+        //    this.gameBoard[34][col].buildStructure(new StructureWall());
+       // }
     }
 
     playTick(tick: number, gameData: GameData) {
         this.generateFlux(tick);
         this.startTick(tick);
-        this.doTick(tick);
+        this.doTick(tick, gameData);
         const energyHarvested = this.harvestEnergy(tick, gameData);
         this.endTick(tick);
 
@@ -156,10 +166,10 @@ export class GameBoard {
         })
     }
 
-    doTick(tick: number) {
+    doTick(tick: number, gameData: GameData) {
         this.gameBoard.forEach((rowArr, row) => {
             rowArr.forEach((cell, col) => {
-                cell.doTick(tick, this);
+                cell.doTick(tick, this, gameData);
             });
         })
     }
@@ -250,6 +260,6 @@ export class GameBoard {
             tRow = Math.floor(Math.random() * this.rows);
             tCol = Math.floor(Math.random() * this.cols);
         }
-        this.gameBoard[tRow][tCol].fluxAmount = value;
+        this.gameBoard[tRow][tCol].fluxAmount += value;
     }
 }

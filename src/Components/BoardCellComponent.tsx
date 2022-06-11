@@ -51,13 +51,13 @@ export const BoardCellComponent: React.FC<{ boardCell: BoardCell, gameBoard: Gam
                 onMouseOver={(ev) => { onHover(); }}
                 style={{
                     color: gameBoard.get_color(boardCell.row, boardCell.col),
-                    //border: boardCell.structure === 'well' ? '1px solid white' : '1px solid #00000000',
+                    //border: boardCell.structure === 'collector' ? '1px solid white' : '1px solid #00000000',
                     //background: backgroundColor,
                     borderRadius: '4px',
                 }}
                 onClick={() => handleClick()}
             >
-                { boardCell.structure?.getType() === 'well' && <WellContainer style={{
+                { boardCell.structure?.getType() === 'collector' && <WellContainer style={{
                     background: `hsla(360, 100%, ${ integ * 50 + 50}%, 1)`
                 }} /> }
                 { boardCell.structure?.getType() === 'absorber' && <AbsorberContainer /> }

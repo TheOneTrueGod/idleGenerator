@@ -23,10 +23,12 @@ const COLS = 50;
 
 function App() {
   const [tick, setTick] = useState(0);
-  const [selectedBuilding, setSelectedBuilding] = useState<TCellStructures>('well');
+  const [selectedBuilding, setSelectedBuilding] = useState<TCellStructures>('collector');
   const [hoveredCell, setHoveredCell] = useState<BoardCell | undefined>(undefined);
   const [gameBoard] = useState<GameBoard>(new GameBoard(ROWS, COLS));
-  const [gameData] = useState<GameData>(new GameData())
+  const [gameData] = useState<GameData>(new GameData());
+  const [totalEnergy] = useState<Array<number>>([])
+  const [averageEnergy, setAverageEnergy] = useState<number>(0);
 
   useEffect(() => {
     const gameInterval = setInterval(() => {
@@ -39,15 +41,20 @@ function App() {
   }, []);
 
   useEffect(() => {
+    totalEnergy.unshift(0);
     gameBoard.playTick(tick, gameData);
+    gameBoard.gameBoard.forEach((row) => {
+      row.forEach((cell) => {
+        totalEnergy[0] += cell.fluxAmount;
+      });
+    });
+    if (totalEnergy.length > 40) {
+      totalEnergy.pop();
+    }
+    if (totalEnergy.length > 0) {
+      setAverageEnergy(totalEnergy.reduce((p, c) => c - p) / -totalEnergy.length);
+    }
   }, [tick]);
-
-  let totalEnergy = 0;
-  gameBoard.gameBoard.forEach((row) => {
-    row.forEach((cell) => {
-      totalEnergy += cell.fluxAmount;
-    })
-  })
 
   const onUpgradeClick = (buildingType: Upgradeable, upgradeName: UpgradeNames) => {
     gameData.buyUpgrade(buildingType, upgradeName);
@@ -57,7 +64,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div>
-          Total Energy: { Math.floor(totalEnergy) }
+          Total Energy: { Math.round(totalEnergy[0]) } ({ (averageEnergy > 0) && "+"}{ Math.round(averageEnergy) }/t)
         </div>
         <div>
           Harvested: { Math.floor(gameData.playerEnergy) }

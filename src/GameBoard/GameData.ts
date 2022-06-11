@@ -1,13 +1,13 @@
 import { GameBoard } from "./GameBoard";
 
-export type UpgradeNames = 'harvestRate'| 'efficiency';
+export type UpgradeNames = 'harvestRate'| 'efficiency' | 'capacity';
 
-export type Upgradeable = 'absorber' | 'well' | 'board' | 'capacity';
+export type Upgradeable = 'absorber' | 'collector' | 'board';
 
 export const UpgradeValues: { [k in Upgradeable]?: {[k2 in UpgradeNames]?: Array<number> }} = {
-    'absorber': { 'harvestRate': [0.2], 'efficiency': [0.1] },
-    'well': { 'harvestRate': [0.1, 10], 'efficiency': [0.1] },
-    'board': { 'harvestRate': [0.01] }
+    'absorber': { 'harvestRate': [0.2, 0.4, 0.6, 0.8, 1], 'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3] },
+    'collector': { 'harvestRate': [0.1, 1, 10], 'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3], 'capacity': [10] },
+    'board': { 'harvestRate': [0, 0.01, 0.02, 0.04, 0.1], 'efficiency': [0.01] }
 }
 
 export class GameData {
