@@ -82,6 +82,7 @@ function App() {
                         boardCell={cell}
                         selectedBuilding={selectedBuilding}
                         gameBoard={gameBoard}
+                        gameData={gameData}
                         onHover={() => {
                           setHoveredCell(gameBoard.get_at(row, col))
                         }} />

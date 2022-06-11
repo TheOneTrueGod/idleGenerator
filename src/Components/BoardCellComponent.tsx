@@ -3,6 +3,7 @@ import { BoardCell, GameBoard } from '../GameBoard/GameBoard';
 
 import styled from 'styled-components';
 import { STRUCTURE_TYPE_TO_STRUCTURE, TCellStructures } from '../GameBoard/Structures/Structure';
+import { GameData } from '../GameBoard/GameData';
 
 const Container = styled.div`
   width: 1em;
@@ -11,6 +12,7 @@ const Container = styled.div`
   padding: 1px;
   cursor: pointer;
   position: relative;
+  user-select: none;
 `;
 
 const DisplayContainer = styled.div`
@@ -30,16 +32,15 @@ const AbsorberContainer = styled(DisplayContainer)`
     border-radius: 50%;
 `;
 
-export const BoardCellComponent: React.FC<{ boardCell: BoardCell, gameBoard: GameBoard, selectedBuilding: TCellStructures, onHover: Function }> = 
-    ({ boardCell, gameBoard, selectedBuilding, onHover }) => {
+export const BoardCellComponent: React.FC<{ boardCell: BoardCell, gameBoard: GameBoard, gameData: GameData, selectedBuilding: TCellStructures, onHover: Function }> = 
+    ({ boardCell, gameBoard, gameData, selectedBuilding, onHover }) => {
 
         function handleClick() {
             if (boardCell.canBeBuiltOn()) {
                 if (boardCell.structure?.getType() === selectedBuilding) {
-                    boardCell.destroyStructure();
-                } else {
-                    const selectedBuildingClass = STRUCTURE_TYPE_TO_STRUCTURE[selectedBuilding];
-                    boardCell.buildStructure(new selectedBuildingClass());
+                    gameData.destroyStructure(boardCell);
+                } else if (gameData.canPlaceStructure(selectedBuilding)) {
+                    gameData.buildStructure(boardCell, selectedBuilding);
                 }
             }
         }

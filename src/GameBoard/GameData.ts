@@ -1,18 +1,41 @@
-import { GameBoard } from "./GameBoard";
+import { BoardCell, GameBoard } from "./GameBoard";
+import { STRUCTURE_TYPE_TO_STRUCTURE, TCellStructures } from "./Structures/Structure";
 
-export type UpgradeNames = 'harvestRate'| 'efficiency' | 'capacity';
+export type UpgradeNames = 'harvestRate'| 'efficiency' | 'capacity' | 'numOwned';
 
 export type Upgradeable = 'absorber' | 'collector' | 'board';
 
 export const UpgradeValues: { [k in Upgradeable]?: {[k2 in UpgradeNames]?: Array<number> }} = {
-    'absorber': { 'harvestRate': [0.2, 0.4, 0.6, 0.8, 1], 'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3] },
-    'collector': { 'harvestRate': [0.1, 1, 10], 'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3], 'capacity': [10] },
-    'board': { 'harvestRate': [0, 0.01, 0.02, 0.04, 0.1], 'efficiency': [0.01] }
+    'absorber': { 
+        'numOwned': [5],
+        'harvestRate': [0.2, 0.4, 0.6, 0.8, 1],
+        'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3]
+    },
+    'collector': { 
+        'numOwned': [5],
+        'harvestRate': [0.1, 1, 10],
+        'efficiency': [0.1, 0.15, 0.2, 0.25, 0.3],
+        'capacity': [10]
+    },
+    'board': {
+        'numOwned': [1],
+        'harvestRate': [0, 0.01, 0.02, 0.04, 0.1],
+        'efficiency': [0.01]
+    }
+}
+
+const STRUCTURE_TO_UPGRADEABLE: Record<TCellStructures, Upgradeable | undefined> = {
+    'collector': 'collector',
+    'absorber': 'absorber',
+    'wall': undefined,
+    'fluxProducer': undefined,
+    'error': undefined
 }
 
 export class GameData {
     playerEnergy: number = 10;
     playerUpgrades: { [k in Upgradeable]?: {[k2 in UpgradeNames]?: number }} = {};
+    buildingsPlaced: { [k in Upgradeable]?: number } = {};
     gameBoards: Array<GameBoard> = [];
     constructor() {
 
@@ -25,11 +48,60 @@ export class GameData {
 
     spendEnergy(amount: number) {
         if (amount > this.playerEnergy) {
-            throw new Error("Can't spend energy you don't have.");
+            console.error("Can't spend energy you don't have.");
+            return false;
         }
         this.playerEnergy -= amount;
+        return true;
     }
 
+    // Buildings
+    private touchPlayerBuilding(buildingType: Upgradeable) {
+        if (!this.buildingsPlaced[buildingType]) {
+            this.buildingsPlaced[buildingType] = 0;
+        }
+    }
+
+    getBuildingsPlaced(buildingType: Upgradeable) {
+        this.touchPlayerBuilding(buildingType);
+        return this.buildingsPlaced[buildingType];
+    }
+
+    buildStructure(boardCell: BoardCell, buildingType: TCellStructures) {
+        const selectedBuildingClass = STRUCTURE_TYPE_TO_STRUCTURE[buildingType];
+        const upgradeable = STRUCTURE_TO_UPGRADEABLE[buildingType];
+        if (upgradeable) {
+            this.touchPlayerBuilding(upgradeable);
+            this.buildingsPlaced[upgradeable]! += 1;
+        }
+        
+        boardCell.buildStructure(new selectedBuildingClass());
+    }
+
+    destroyStructure(boardCell: BoardCell) {
+        if (boardCell.structure) {
+            const upgradeable = STRUCTURE_TO_UPGRADEABLE[boardCell.structure.getType()];
+            if (upgradeable) {
+                if (!this.buildingsPlaced[upgradeable]) {
+                    throw new Error("How did we destroy a structure we never placed?");
+                }
+                this.buildingsPlaced[upgradeable]! -= 1;
+            }
+            //this.buildingsPlaced
+            boardCell.destroyStructure();
+        }
+    }
+
+    canPlaceStructure(buildingType: TCellStructures) {
+        const upgradeable = STRUCTURE_TO_UPGRADEABLE[buildingType];
+        if (upgradeable) {
+            this.touchPlayerBuilding(upgradeable);
+            return this.buildingsPlaced[upgradeable]! < this.getBuildingStat(upgradeable, 'numOwned');
+        }
+        return true;
+    }
+
+    // Upgrades
     getUpgradeNamesForBuilding(buildingType: Upgradeable): Array<UpgradeNames> {
         if (!UpgradeValues[buildingType]) {
             throw new Error(`Can't get upgrade names for building type '${buildingType}'`);
@@ -47,7 +119,10 @@ export class GameData {
         return this.playerUpgrades[buildingType]![upgradeName]!;
     }
 
-    getUpgradeCost(buildingType: Upgradeable, upgradeName: UpgradeNames, level: number) {
+    getUpgradeCost(buildingType: Upgradeable, upgradeName: UpgradeNames, level?: number): number {
+        if (level === undefined) {
+            level = this.getUpgradeLevel(buildingType, upgradeName) + 1;
+        }
         return Math.pow(10, level);
     }
 
@@ -82,6 +157,9 @@ export class GameData {
     }
 
     buyUpgrade(buildingType: Upgradeable, upgradeName: UpgradeNames) {
+        if (!this.spendEnergy(this.getUpgradeCost(buildingType, upgradeName))) {
+            return;
+        }
         this.touchPlayerUpgrade(buildingType, upgradeName);
         this.playerUpgrades[buildingType]![upgradeName]! += 1;
     }

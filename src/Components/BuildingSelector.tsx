@@ -83,18 +83,23 @@ const Building: React.FC<{
     );
 }
 
-
 const UpgradeContainer = styled.div`
     font-size: 14px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     margin: 4px 0px;
-    height: 1.5em;
 `;
 
-const UpgradeButton = styled.div`
-    border: 1px solid white;
+const UpgradeContainerRow = styled.div`
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+`;
+
+const UpgradeButton = styled.div<{ disabled: Boolean }>`
+    border: 1px solid ${props => props.disabled ? '#666' : 'white'};
+    color: ${props => props.disabled ? '#666' : 'white'};
     width: 1.5em;
     height: 1.5em;
     display: flex;
@@ -105,6 +110,11 @@ const UpgradeButton = styled.div`
 const UpgradeValueButton = styled.div`
     margin-left: auto;
     margin-right: 8px;
+`;
+
+const CostContainer = styled.div`
+    margin-left: auto;
+    font-size: 10px;
 `;
 
 const BuildingUpgrade: React.FC<{
@@ -118,16 +128,35 @@ const BuildingUpgrade: React.FC<{
     const displayNames = {
         'harvestRate': 'Absorb',
         'efficiency': 'Efficiency',
-        'capacity': 'Capacity'
+        'capacity': 'Capacity',
+        'numOwned': 'NumOwned',
     }
 
     const showUpgradeButton = !gameData.isAtMaxUpgradeLevel(buildingName, upgradeName);
+    const upgradeCost = gameData.getUpgradeCost(buildingName, upgradeName);
+    const canAfford = gameData.playerEnergy >= upgradeCost;
+
+    const upgradeClick = () => {
+        if (canAfford) {
+            onClick && onClick();
+        }
+    }
+
+    let buildingAmount = '';
+    if (upgradeName === 'numOwned') {
+        buildingAmount = `${gameData.getBuildingsPlaced(buildingName)}/`
+    }
 
     return (
         <UpgradeContainer>
-            <div>{displayNames[upgradeName]}</div>
-            <UpgradeValueButton>{statValue}</UpgradeValueButton>
-            {showUpgradeButton && <UpgradeButton onClick={() => onClick && onClick()}>+</UpgradeButton>}
+            <UpgradeContainerRow>
+                <div>{displayNames[upgradeName]}</div>
+                <UpgradeValueButton>{buildingAmount}{statValue}</UpgradeValueButton>
+                {showUpgradeButton && <UpgradeButton disabled={!canAfford} onClick={() => upgradeClick()}>+</UpgradeButton>}
+            </UpgradeContainerRow>
+            {showUpgradeButton && <UpgradeContainerRow>
+                <CostContainer>Cost: {upgradeCost}</CostContainer>
+            </UpgradeContainerRow>}
         </UpgradeContainer>
     );
 }
