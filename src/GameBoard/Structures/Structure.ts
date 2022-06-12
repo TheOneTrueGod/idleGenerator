@@ -3,7 +3,17 @@ import { GameData } from "../GameData";
 
 export type TCellStructures =  'error' | 'collector' | 'wall' | 'absorber' | 'fluxProducer';
 
-export class Structure {
+interface IStructure {
+    type: TCellStructures;
+    getType: () => TCellStructures;
+    readyToDestroy: (cell: BoardCell) => Boolean;
+    generateFlux: (tick: number, gameBoard: GameBoard, cell: BoardCell) => void;
+    getIntegrity: (cell: BoardCell) => number;
+    canBeBuiltOver: () => Boolean;
+    harvestEnergy: (tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData) => number;
+}
+
+export class Structure implements IStructure {
     type: TCellStructures = 'error';
     constructor() {}
 
@@ -21,7 +31,7 @@ export class Structure {
     harvestEnergy(tick: number, cell: BoardCell, gameBoard: GameBoard, gameData: GameData): number { return 0; }
 }
 
-export class StructureError extends Structure {
+export class StructureError extends Structure implements IStructure {
     constructor() { throw new Error('THIS SHOULD NEVER BE INITIALIZED'); super(); }
 }
 
@@ -73,22 +83,39 @@ export class StructureWall extends Structure {
     canBeBuiltOver() { return false; }
 }
 
+export type FluxProducerShapes = 
+    // Hits the board randomly
+    'bombard' |
+    // Sprays around it
+    'fountain';
+
 export class StructureFluxProducer extends Structure {
     type: TCellStructures = 'fluxProducer';
+    shape: FluxProducerShapes;
+    fluxPerTick: number;
+
+    constructor(shape: FluxProducerShapes, fluxPerTick: number) {
+        super();
+        this.shape = shape;
+        this.fluxPerTick = fluxPerTick;
+    }
 
     generateFlux(tick: number, gameBoard: GameBoard, cell: BoardCell) {
-        let range = { x1: cell.col - 2, x2: cell.col + 2, y1: cell.row - 2, y2: cell.row + 2 }
-        if (tick % 5 === 1) {
-            gameBoard.generateRandomImpact(100);
+        switch (this.shape) {
+            case 'bombard':
+                let range = { x1: cell.col - 2, x2: cell.col + 2, y1: cell.row - 2, y2: cell.row + 2 }
+                if (tick % 5 === 1) {
+                    gameBoard.generateRandomImpact(this.fluxPerTick * 5);
+                }
+                /*if (tick % 10 === 1 && Math.random() > 0.5) {
+                    gameBoard.generateRandomImpact(200);
+                }*/
         }
-        /*if (tick % 10 === 1 && Math.random() > 0.5) {
-            gameBoard.generateRandomImpact(200);
-        }*/
     }
     canBeBuiltOver() { return false; }
 }
 
-export const STRUCTURE_TYPE_TO_STRUCTURE: Record<TCellStructures, typeof Structure> = {
+export const STRUCTURE_TYPE_TO_STRUCTURE: Record<TCellStructures, typeof Structure | typeof StructureFluxProducer> = {
     'error': StructureError,
     'collector': StructureWell,
     'wall': StructureWall,

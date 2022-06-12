@@ -140,7 +140,7 @@ export class GameBoard {
         }
 
         // Initial Build
-        this.gameBoard[2][2].buildStructure(new StructureFluxProducer());
+        this.gameBoard[2][2].buildStructure(new StructureFluxProducer('bombard', 10));
         //this.gameBoard[this.rows - 3][2].buildStructure(new StructureFluxProducer());
         //for (let col = 0; col < this.cols - 5; col ++) {
         //    this.gameBoard[5][col].buildStructure(new StructureWall());

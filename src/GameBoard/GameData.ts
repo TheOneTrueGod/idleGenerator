@@ -35,7 +35,7 @@ const STRUCTURE_TO_UPGRADEABLE: Record<TCellStructures, Upgradeable | undefined>
 export class GameData {
     playerEnergy: number = 10;
     playerUpgrades: { [k in Upgradeable]?: {[k2 in UpgradeNames]?: number }} = {};
-    buildingsPlaced: { [k in Upgradeable]?: number } = {};
+    buildingsPlaced: { [k in Upgradeable]?: number } = { 'board': 1 };
     gameBoards: Array<GameBoard> = [];
     constructor() {
 
@@ -74,7 +74,7 @@ export class GameData {
             this.touchPlayerBuilding(upgradeable);
             this.buildingsPlaced[upgradeable]! += 1;
         }
-        
+        // @ts-ignore -- This shouldn't happen.  Players can't build flux spawners
         boardCell.buildStructure(new selectedBuildingClass());
     }
 
